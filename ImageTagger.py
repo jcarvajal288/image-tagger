@@ -3,14 +3,6 @@ import os
 import re
 import requests
 
-danbooru = 'http://danbooru.donmai.us'
-imageMD5 = '00dffc66f544c7748d53b4bd913939bc'
-requestURL = "{}/posts.json?md5={}".format(danbooru, imageMD5)
-
-print(requestURL)
-
-response = requests.get(requestURL)
-print(response.json()['tag_string'])
 
 def parseArgs():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -24,8 +16,19 @@ def tagImages(targetDirectory):
     for subdir, dirs, images in os.walk(targetDirectory):
         for image in images:
             if md5Regex.match(image):
-                filepath = subdir + os.sep + image
-                print(filepath)
+                print("Tagging {}...".format(image))
+                tagImage(subdir, image)
+
+
+def tagImage(subdir, image):
+    md5 = image.split('.')[0]
+    requestURL = "http://danbooru.donmai.us/posts.json?md5={}".format(md5)
+    print(requestURL)
+    response = requests.get(requestURL)
+    if response.json() is None:
+        return
+    tagString = response.json()['tag_string']
+    print(tagString)
 
 
 def main():
