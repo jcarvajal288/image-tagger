@@ -2,6 +2,7 @@ import argparse
 import os
 import re
 import requests
+import subprocess
 
 
 def parseArgs():
@@ -16,19 +17,23 @@ def tagImages(targetDirectory):
     for subdir, dirs, images in os.walk(targetDirectory):
         for image in images:
             if md5Regex.match(image):
-                print("Tagging {}...".format(image))
-                tagImage(subdir, image)
+                ext = image.split('.')[1]
+                if ext == 'jpg' or ext == 'jpeg':
+                    print("Tagging {}...".format(image))
+                    tagJPG(subdir, image)
 
 
-def tagImage(subdir, image):
+def tagJPG(subdir, image):
     md5 = image.split('.')[0]
     requestURL = "http://danbooru.donmai.us/posts.json?md5={}".format(md5)
-    print(requestURL)
     response = requests.get(requestURL)
     if response.json() is None:
         return
     tagString = response.json()['tag_string']
-    print(tagString)
+    exiftool = 'exiftool.exe' 
+    cmd = '{} -XPKeywords="{}" {}'.format(exiftool, tagString, image)
+    output = subprocess.check_output(cmd)
+    print(output.decode().strip())
 
 
 def main():
@@ -44,4 +49,19 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    #main()
+    #inFile = "V:/Media/sample/61180d0fbfd2cbc572825c59a27535b1.jpg"
+    image = "00dffc66f544c7748d53b4bd913939bc.jpg"
+    md5 = image.split('.')[0]
+    requestURL = "http://danbooru.donmai.us/posts.json?md5={}".format(md5)
+    #print(requestURL)
+    response = requests.get(requestURL)
+    #if response.json() is None:
+        #return
+    tagString = response.json()['tag_string']
+    #print(tagString)
+    #cmd = "exiftool.exe -XPKeywords {}".format(image)
+    exiftool = 'exiftool.exe' 
+    cmd = '{} -XPKeywords="{}" {}'.format(exiftool, tagString, image)
+    output = subprocess.check_output(cmd)
+    print(output)
