@@ -45,7 +45,8 @@ def tagJPG(fullname, md5):
         print("No response from danbooru.")
         return False
     tagString = response.json()['tag_string']
-    cmd = 'exiftool -XPKeywords="{}" {}'.format(tagString, fullname)
+    #cmd = 'exiftool -XPKeywords="{}" {}'.format(tagString, fullname)
+    cmd = 'exiftool'
     output = subprocess.check_output(cmd)
     print(output.decode().strip())
     return True
