@@ -41,7 +41,7 @@ def tagJPG(fullname, md5):
     response = requests.get(requestURL)
     print(response, flush=True)
     if response.json() is None:
-        print("No response from danbooru.")
+        print("No response from danbooru.", flush=True)
         return False
     tagString = response.json()['tag_string']
     cmd = 'exiftool -XPKeywords="{}" {}'.format(tagString, fullname)
