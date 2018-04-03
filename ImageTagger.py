@@ -3,7 +3,6 @@ import os
 import re
 import requests
 import shutil
-import subprocess
 import tarfile
 
 
@@ -45,9 +44,8 @@ def tagJPG(fullname, md5):
         print("No response from danbooru.")
         return False
     tagString = response.json()['tag_string']
-    #cmd = 'exiftool -XPKeywords="{}" {}'.format(tagString, fullname)
-    cmd = 'exiftool'
-    output = subprocess.check_output(cmd)
+    cmd = 'exiftool -XPKeywords="{}" {}'.format(tagString, fullname)
+    output = os.system(cmd)
     print(output.decode().strip())
     return True
 
