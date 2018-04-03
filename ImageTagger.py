@@ -2,6 +2,7 @@ import argparse
 import os
 import re
 import requests
+import shutil
 import subprocess
 import tarfile
 
@@ -17,7 +18,7 @@ def parseArgs():
     return parser.parse_args()
 
 
-def tagImages(targetDirectory, tarball):
+def tagImages(targetDirectory, backupDirectory):
     md5Regex = re.compile(r'^[a-f0-9]{32}\..+$')
     for subdir, dirs, images in os.walk(targetDirectory):
         if not subdir.endswith('/'):
@@ -30,29 +31,48 @@ def tagImages(targetDirectory, tarball):
                     print("Tagging {}...".format(image))
                     if tagJPG(fullname, md5):
                         original = fullname + "_original"
-                        tarball.add(original)
-                        os.remove(original)
+                        try:
+                            os.rename(original, backupDirectory + image + "_original")
+                        except FileExistsError: pass
 
 
 def tagJPG(fullname, md5):
     requestURL = "http://danbooru.donmai.us/posts.json?md5={}".format(md5)
-    print(requestURL)
+    print("Querying: {}".format(requestURL))
     response = requests.get(requestURL)
     print(response)
     if response.json() is None:
         print("No response from danbooru.")
         return False
     tagString = response.json()['tag_string']
-    exiftool = 'exiftool.exe' 
-    cmd = '{} -XPKeywords="{}" {}'.format(exiftool, tagString, fullname)
+    cmd = 'exiftool -XPKeywords="{}" {}'.format(tagString, fullname)
     output = subprocess.check_output(cmd)
     print(output.decode().strip())
     return True
 
 
+def prepBackup(backupDirectory):
+    tarballName = backupDirectory[:-1] + ".tgz"
+    if not os.path.isdir(backupDirectory):
+        os.mkdir(backupDirectory)
+    if os.path.exists(tarballName):
+        with tarfile.open(tarballName, 'r:gz') as tarball:
+            tarball.extractall(backupDirectory)
+        os.remove(tarballName)
+
+
+def compressOriginals(backupDirectory):
+    tarballName = backupDirectory[:-1] + ".tgz"
+    with tarfile.open(tarballName, 'w:gz') as tarball:
+        for subdir, dirs, images in os.walk(backupDirectory):
+            for image in images:
+                tarball.add(subdir+image, arcname=image)
+    shutil.rmtree(backupDirectory)
+
+
 def main():
-    targetDirectory = "V:/Media/sample/"
-    backupDirectory = "V:/Media/"
+    targetDirectory = "V:/Media/sampleTest/"
+    backupDirectory = "V:/Media/sampleOriginals/"
 
     args = parseArgs()
     if args.targetDirectory is not None:
@@ -65,8 +85,11 @@ def main():
     if not backupDirectory.endswith('/'):
         backupDirectory += '/'
 
-    with tarfile.open(backupDirectory + "taggedImageBackup.tar", "w") as tarball:
-        tagImages(targetDirectory, tarball)
+    prepBackup(backupDirectory)
+
+    tagImages(targetDirectory, backupDirectory)
+
+    compressOriginals(backupDirectory)
 
 
 if __name__ == '__main__':
