@@ -27,7 +27,7 @@ def tagImages(targetDirectory, backupDirectory):
                 md5, ext = image.split('.')
                 fullname = subdir + image
                 if ext == 'jpg' or ext == 'jpeg':
-                    print("Tagging {}...".format(image))
+                    print("Tagging {}...".format(image), flush=True)
                     if tagJPG(fullname, md5):
                         original = fullname + "_original"
                         try:
@@ -37,9 +37,9 @@ def tagImages(targetDirectory, backupDirectory):
 
 def tagJPG(fullname, md5):
     requestURL = "http://danbooru.donmai.us/posts.json?md5={}".format(md5)
-    print("Querying: {}".format(requestURL))
+    print("Querying: {}".format(requestURL), flush=True)
     response = requests.get(requestURL)
-    print(response)
+    print(response, flush=True)
     if response.json() is None:
         print("No response from danbooru.")
         return False
