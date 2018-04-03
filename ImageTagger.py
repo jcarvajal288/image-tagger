@@ -46,7 +46,6 @@ def tagJPG(fullname, md5):
     tagString = response.json()['tag_string']
     cmd = 'exiftool -XPKeywords="{}" {}'.format(tagString, fullname)
     output = os.system(cmd)
-    print(output.decode().strip())
     return True
 
 
