@@ -19,6 +19,7 @@ def parseArgs():
 
 
 def tagImages(targetDirectory, backupDirectory, isPartialRun):
+    print("Starting tagging run...", flush=True)
     md5Regex = re.compile(r'^[a-f0-9]{32}\..+$')
     for subdir, dirs, images in os.walk(targetDirectory):
         if not subdir.endswith('/'):
