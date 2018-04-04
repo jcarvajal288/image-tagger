@@ -61,14 +61,14 @@ def prepBackup(backupDirectory):
     if not os.path.isdir(backupDirectory):
         os.mkdir(backupDirectory)
     if os.path.exists(tarballName):
-        print("Unpacking backup tarball...")
+        print("Unpacking backup tarball...", flush=True)
         with tarfile.open(tarballName, 'r:gz') as tarball:
             tarball.extractall(backupDirectory)
         os.remove(tarballName)
 
 
 def compressOriginals(backupDirectory):
-    print("Compressing backup images...")
+    print("Compressing backup images...", flush=True)
     tarballName = backupDirectory[:-1] + ".tgz"
     with tarfile.open(tarballName, 'w:gz') as tarball:
         for subdir, dirs, images in os.walk(backupDirectory):
