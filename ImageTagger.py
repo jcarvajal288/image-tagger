@@ -3,6 +3,7 @@ import os
 import re
 import requests
 import shutil
+import subprocess
 import tarfile
 
 
@@ -17,7 +18,7 @@ def parseArgs():
     return parser.parse_args()
 
 
-def tagImages(targetDirectory, backupDirectory):
+def tagImages(targetDirectory, backupDirectory, isPartialRun):
     md5Regex = re.compile(r'^[a-f0-9]{32}\..+$')
     for subdir, dirs, images in os.walk(targetDirectory):
         if not subdir.endswith('/'):
@@ -27,12 +28,18 @@ def tagImages(targetDirectory, backupDirectory):
                 md5, ext = image.split('.')
                 fullname = subdir + image
                 if ext == 'jpg' or ext == 'jpeg':
+                    if isPartialRun and alreadyTagged(fullname):
+                        continue
                     print("Tagging {}...".format(image), flush=True)
                     if tagJPG(fullname, md5):
                         original = fullname + "_original"
-                        try:
-                            os.rename(original, backupDirectory + image + "_original")
+                        try: os.rename(original, backupDirectory + image + "_original")
                         except FileExistsError: pass
+
+
+def alreadyTagged(fullname):
+    tags = subprocess.check_output(['exiftool', '-XPKeywords', fullname])
+    return len(tags) != 0
 
 
 def tagJPG(fullname, md5):
@@ -45,8 +52,8 @@ def tagJPG(fullname, md5):
         return False
     tagString = response.json()['tag_string']
     cmd = 'exiftool -XPKeywords="{}" {}'.format(tagString, fullname)
-    output = os.system(cmd)
-    return output == 0
+    returnCode = subprocess.call(cmd, shell=True)
+    return returnCode == 0
 
 
 def prepBackup(backupDirectory):
@@ -54,12 +61,14 @@ def prepBackup(backupDirectory):
     if not os.path.isdir(backupDirectory):
         os.mkdir(backupDirectory)
     if os.path.exists(tarballName):
+        print("Unpacking backup tarball...")
         with tarfile.open(tarballName, 'r:gz') as tarball:
             tarball.extractall(backupDirectory)
         os.remove(tarballName)
 
 
 def compressOriginals(backupDirectory):
+    print("Compressing backup images...")
     tarballName = backupDirectory[:-1] + ".tgz"
     with tarfile.open(tarballName, 'w:gz') as tarball:
         for subdir, dirs, images in os.walk(backupDirectory):
@@ -70,7 +79,7 @@ def compressOriginals(backupDirectory):
 
 def main():
     targetDirectory = "V:/Media/sampleTest/"
-    backupDirectory = "V:/Media/sampleOriginals/"
+    backupDirectory = "V:/Media/sampleTestOriginals/"
 
     args = parseArgs()
     if args.targetDirectory is not None:
@@ -85,7 +94,7 @@ def main():
 
     prepBackup(backupDirectory)
 
-    tagImages(targetDirectory, backupDirectory)
+    tagImages(targetDirectory, backupDirectory, args.partial)
 
     compressOriginals(backupDirectory)
 
