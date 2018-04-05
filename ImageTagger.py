@@ -25,22 +25,28 @@ def tagImages(targetDirectory, backupDirectory, isPartialRun):
         if not subdir.endswith('/'):
             subdir += '/'
         for image in images:
-            if md5Regex.match(image):
-                md5, ext = image.split('.')
-                fullname = subdir + image
-                if ext == 'jpg' or ext == 'jpeg':
-                    if isPartialRun and alreadyTagged(fullname):
-                        continue
-                    print("Tagging {}...".format(image), flush=True)
-                    if tagJPG(fullname, md5):
-                        original = fullname + "_original"
-                        try: os.rename(original, backupDirectory + image + "_original")
-                        except FileExistsError: pass
+            try:
+                if md5Regex.match(image):
+                    md5, ext = image.split('.')
+                    fullname = subdir + image
+                    if ext == 'jpg' or ext == 'jpeg':
+                        if isPartialRun and alreadyTagged(fullname):
+                            continue
+                        print("Tagging {}...".format(image), flush=True)
+                        if tagJPG(fullname, md5):
+                            original = fullname + "_original"
+                            try: os.rename(original, backupDirectory + image + "_original")
+                            except FileExistsError: pass
+            except RuntimeError as error:
+                print(error, flush=True)
+
 
 
 def alreadyTagged(fullname):
     tags = subprocess.check_output(['exiftool', '-XPKeywords', fullname])
-    return len(tags) != 0
+    if tags.startwith("Error"):
+        raise RuntimeError(tags)
+    else: return len(tags) != 0
 
 
 def queryDanbooru(md5):
