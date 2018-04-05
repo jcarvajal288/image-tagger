@@ -43,13 +43,21 @@ def alreadyTagged(fullname):
     return len(tags) != 0
 
 
-def tagJPG(fullname, md5):
+def queryDanbooru(md5):
     requestURL = "http://danbooru.donmai.us/posts.json?md5={}".format(md5)
     print("Querying: {}".format(requestURL), flush=True)
     response = requests.get(requestURL)
     print(response, flush=True)
     if response.json() is None:
         print("No response from danbooru.", flush=True)
+        return False
+    if not response.ok:
+        return False
+
+
+def tagJPG(fullname, md5):
+    response = queryDanbooru(md5)
+    if not response:
         return False
     tagString = response.json()['tag_string']
     cmd = 'exiftool -XPKeywords="{}" {}'.format(tagString, fullname)
