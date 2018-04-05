@@ -44,8 +44,8 @@ def tagImages(targetDirectory, backupDirectory, isPartialRun):
 
 def alreadyTagged(fullname):
     tags = subprocess.check_output(['exiftool', '-XPKeywords', fullname])
-    if tags.startwith("Error"):
-        raise RuntimeError(tags)
+    if tags.startswith(b'Error'):
+        raise RuntimeError(tags.decode())
     else: return len(tags) != 0
 
 
