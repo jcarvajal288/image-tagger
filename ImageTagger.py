@@ -54,10 +54,10 @@ def queryDanbooru(md5):
     print("Querying: {}".format(requestURL), flush=True)
     response = requests.get(requestURL)
     print(response, flush=True)
+    if not response.ok:
+        return False
     if response.json() is None:
         print("No response from danbooru.", flush=True)
-        return False
-    if not response.ok:
         return False
 
 
