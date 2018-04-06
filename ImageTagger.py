@@ -20,20 +20,20 @@ def parseArgs():
 
 def tagImages(targetDirectory, backupDirectory, isPartialRun):
     print("Starting tagging run...", flush=True)
-    md5Regex = re.compile(r'^[a-f0-9]{32}\..+$')
+    md5Regex = re.compile(r'^[a-f0-9]{32}\.\w+$')
     for subdir, dirs, images in os.walk(targetDirectory):
         if not subdir.endswith('/'):
             subdir += '/'
         for image in images:
             try:
                 if md5Regex.match(image):
-                    print(image, flush=True)
+                    print("Considering {}".format(image), flush=True)
                     md5, ext = image.split('.')
                     fullname = subdir + image
                     if ext == 'jpg' or ext == 'jpeg':
                         if isPartialRun and alreadyTagged(fullname):
                             continue
-                        print("Tagging {}...".format(image), flush=True)
+                        print("Attempting to tag...", flush=True)
                         if tagJPG(fullname, md5):
                             original = fullname + "_original"
                             try: os.rename(original, backupDirectory + image + "_original")
