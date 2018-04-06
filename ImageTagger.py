@@ -25,16 +25,17 @@ def tagImages(targetDirectory, backupDirectory, isPartialRun):
         if not subdir.endswith('/'):
             subdir += '/'
         for image in images:
+            fullname = subdir + image
+            print("Considering {}".format(fullname), flush=True)
             try:
                 if md5Regex.match(image):
-                    print("Considering {}".format(image), flush=True)
                     md5, ext = image.split('.')
-                    fullname = subdir + image
                     if ext == 'jpg' or ext == 'jpeg':
                         if isPartialRun and alreadyTagged(fullname):
                             continue
                         print("Attempting to tag...", flush=True)
                         if tagJPG(fullname, md5):
+                            print("Tag successful.", flush=True)
                             original = fullname + "_original"
                             try: os.rename(original, backupDirectory + image + "_original")
                             except FileExistsError: pass
