@@ -27,6 +27,7 @@ def tagImages(targetDirectory, backupDirectory, isPartialRun):
         for image in images:
             try:
                 if md5Regex.match(image):
+                    print(image, flush=True)
                     md5, ext = image.split('.')
                     fullname = subdir + image
                     if ext == 'jpg' or ext == 'jpeg':
