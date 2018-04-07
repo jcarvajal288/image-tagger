@@ -38,17 +38,22 @@ def tagImages(targetDirectory, backupDirectory, isPartialRun):
                             print("Tag successful.", flush=True)
                             original = fullname + "_original"
                             try: os.rename(original, backupDirectory + image + "_original")
-                            except FileExistsError: pass
+                            except FileExistsError: 
+                                os.remove(original)
             except RuntimeError as error:
                 print(error, flush=True)
 
 
 
 def alreadyTagged(fullname):
-    tags = subprocess.check_output(['exiftool', '-XPKeywords', fullname])
-    if tags.startswith(b'Error'):
-        raise RuntimeError(tags.decode())
-    else: return len(tags) != 0
+    completedProcess = subprocess.run(['exiftool', '-XPKeywords', fullname])
+    tags = completedProcess.stdout
+    if completedProcess.stderr:
+        raise RuntimeError(completedProcess.stderr)
+    if tags:
+        print("Already tagged.", flush=True)
+        return True
+    else: return False
 
 
 def queryDanbooru(md5):
@@ -58,9 +63,10 @@ def queryDanbooru(md5):
     print(response, flush=True)
     if not response.ok:
         return False
-    if response.json() is None:
+    elif response.json() is None:
         print("No response from danbooru.", flush=True)
         return False
+    else: return response
 
 
 def tagJPG(fullname, md5):
@@ -69,8 +75,8 @@ def tagJPG(fullname, md5):
         return False
     tagString = response.json()['tag_string']
     cmd = 'exiftool -XPKeywords="{}" {}'.format(tagString, fullname)
-    returnCode = subprocess.call(cmd, shell=True)
-    return returnCode == 0
+    completedProcess = subprocess.run(cmd, shell=True)
+    return completedProcess.returncode == 0
 
 
 def prepBackup(backupDirectory):
