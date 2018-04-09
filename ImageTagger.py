@@ -37,7 +37,7 @@ def tagImages(targetDirectory, backupDirectory, isPartialRun):
                         if tagJPG(fullname, md5):
                             print("Tag successful.", flush=True)
                             original = fullname + "_original"
-                            try: os.rename(original, backupDirectory + image + "_original")
+                            try: shutil.move(original, backupDirectory + image + "_original")
                             except FileExistsError: 
                                 os.remove(original)
             except RuntimeError as error:
