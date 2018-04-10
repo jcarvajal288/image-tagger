@@ -46,8 +46,8 @@ def tagImages(targetDirectory, backupDirectory, isPartialRun):
 
 
 def alreadyTagged(fullname):
-    completedProcess = subprocess.run(['exiftool', '-XPKeywords', fullname])
-    tags = completedProcess.stdout
+    completedProcess = subprocess.run(['exiftool', '-XPKeywords', fullname], stdout=subprocess.PIPE)
+    tags = completedProcess.stdout.decode()
     if completedProcess.stderr:
         raise RuntimeError(completedProcess.stderr)
     if tags:
