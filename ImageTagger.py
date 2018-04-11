@@ -66,14 +66,28 @@ def queryDanbooru(md5):
     elif response.json() is None:
         print("No response from danbooru.", flush=True)
         return False
-    else: return response
+    else: return response.json()['tag_string']
+
+
+def queryGelbooru(md5):
+    requestURL = "http://gelbooru.com/index.php?page=dapi&s=post&q=index&json=1&tags=md5:{}".format(md5)
+    print("Querying: {}".format(requestURL), flush=True)
+    response = requests.get(requestURL)
+    print(response, flush=True)
+    if not response.ok:
+        return False
+    elif response.text == '':
+        print("No response from gelbooru.", flush=True)
+        return False
+    else: return response.json()[0]['tags']
 
 
 def tagJPG(fullname, md5):
-    response = queryDanbooru(md5)
-    if not response:
+    tagString = queryDanbooru(md5)
+    if not tagString:
+        tagString = queryGelbooru(md5)
+    if not tagString:
         return False
-    tagString = response.json()['tag_string']
     cmd = 'exiftool -XPKeywords="{}" {}'.format(tagString, fullname)
     completedProcess = subprocess.run(cmd, shell=True)
     return completedProcess.returncode == 0
