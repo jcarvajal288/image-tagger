@@ -46,7 +46,7 @@ def tagImages(targetDirectory, backupDirectory, isPartialRun):
 
 
 def alreadyTagged(fullname):
-    completedProcess = subprocess.run(['exiftool', '-XPKeywords', fullname], stdout=subprocess.PIPE)
+    completedProcess = subprocess.run(['exiftool', '-XPKeywords', "{}".format(fullname)], stdout=subprocess.PIPE)
     tags = completedProcess.stdout.decode()
     if completedProcess.stderr:
         raise RuntimeError(completedProcess.stderr)
@@ -88,7 +88,7 @@ def tagJPG(fullname, md5):
         tagString = queryGelbooru(md5)
     if not tagString:
         return False
-    cmd = 'exiftool -XPKeywords="{}" {}'.format(tagString, fullname)
+    cmd = 'exiftool -XPKeywords="{}" {}'.format(tagString, "{}".format(fullname))
     completedProcess = subprocess.run(cmd, shell=True)
     return completedProcess.returncode == 0
 
