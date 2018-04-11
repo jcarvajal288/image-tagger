@@ -88,7 +88,7 @@ def tagJPG(fullname, md5):
         tagString = queryGelbooru(md5)
     if not tagString:
         return False
-    cmd = 'exiftool -XPKeywords="{}" {}'.format(tagString, "{}".format(fullname))
+    cmd = 'exiftool -XPKeywords="{}" "{}"'.format(tagString, fullname)
     completedProcess = subprocess.run(cmd, shell=True)
     return completedProcess.returncode == 0
 
