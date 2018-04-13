@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import tarfile
 
+verboseLogs = True
 
 def parseArgs():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -15,18 +16,20 @@ def parseArgs():
             help='directory where the backup tarball will be located')
     parser.add_argument( '--partial', action="store_true", dest='partial', 
             help="if present, will not tag already tagged images")
+    parser.add_argument( '--verbose', action="store_true", dest='verbose', 
+            help="verbose logs")
     return parser.parse_args()
 
 
 def tagImages(targetDirectory, backupDirectory, isPartialRun):
-    print("Starting tagging run...", flush=True)
+    log("Starting tagging run...")
     md5Regex = re.compile(r'^[a-f0-9]{32}\.\w+$')
     for subdir, dirs, images in os.walk(targetDirectory):
         if not subdir.endswith('/'):
             subdir += '/'
         for image in images:
             fullname = subdir + image
-            print("Considering {}".format(fullname), flush=True)
+            log("Considering {}".format(fullname))
             try:
                 if md5Regex.match(image):
                     md5, ext = image.split('.')
@@ -51,7 +54,7 @@ def alreadyTagged(fullname):
     if completedProcess.stderr:
         raise RuntimeError(completedProcess.stderr)
     if tags:
-        print("Already tagged.", flush=True)
+        log("Already tagged.")
         return True
     else: return False
 
@@ -114,11 +117,18 @@ def compressOriginals(backupDirectory):
     shutil.rmtree(backupDirectory)
 
 
+def log(message):
+    if verboseLogs:
+        print(message, flush=True)
+
+
+
 def main():
     targetDirectory = "V:/Media/sampleTest/"
     backupDirectory = "V:/Media/sampleTestOriginals/"
 
     args = parseArgs()
+    verboseLogs = args.verbose
     if args.targetDirectory is not None:
         targetDirectory = args.targetDirectory
     if not targetDirectory.endswith('/'):
