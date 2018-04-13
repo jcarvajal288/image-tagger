@@ -6,7 +6,7 @@ import shutil
 import subprocess
 import tarfile
 
-verboseLogs = True
+verboseLogs = False
 
 def parseArgs():
     parser = argparse.ArgumentParser(description=__doc__)
