@@ -1,12 +1,12 @@
 import argparse
 import os
+from PIL import Image
 import re
 import requests
 import shutil
 import subprocess
 import tarfile
 
-verboseLogs = False
 
 def parseArgs():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -16,36 +16,40 @@ def parseArgs():
             help='directory where the backup tarball will be located')
     parser.add_argument( '--partial', action="store_true", dest='partial', 
             help="if present, will not tag already tagged images")
-    parser.add_argument( '--verbose', action="store_true", dest='verbose', 
-            help="verbose logs")
     return parser.parse_args()
 
 
 def tagImages(targetDirectory, backupDirectory, isPartialRun):
-    log("Starting tagging run...")
     md5Regex = re.compile(r'^[a-f0-9]{32}\.\w+$')
     for subdir, dirs, images in os.walk(targetDirectory):
         if not subdir.endswith('/'):
             subdir += '/'
         for image in images:
             fullname = subdir + image
-            log("Considering {}".format(fullname))
             try:
                 if md5Regex.match(image):
                     md5, ext = image.split('.')
                     if ext == 'jpg' or ext == 'jpeg':
                         if isPartialRun and alreadyTagged(fullname):
                             continue
-                        print("Attempting to tag...", flush=True)
+                        print("Attempting to tag {}".format(image), flush=True)
                         if tagJPG(fullname, md5):
                             print("Tag successful.", flush=True)
                             original = fullname + "_original"
-                            try: shutil.move(original, backupDirectory + image + "_original")
-                            except FileExistsError: 
-                                os.remove(original)
+                            moveToBackup(original, backupDirectory)
+                    elif ext == 'png':
+                        jpgName = os.path.splitext(fullname)[0] + '.jpg'
+                        print("Converting {}...".format(image), flush=True)
+                        if convertPNG(fullname, jpgName):
+                            print("Conversion successful.", flush=True)
+                            moveToBackup(fullname, backupDirectory)
+                        print("Attempting to tag {}".format(os.path.basename(jpgName)), flush=True)
+                        if tagJPG(jpgName, md5):
+                            print("Tag successful.", flush=True)
+                            original = jpgName + "_original"
+                            os.remove(original)
             except RuntimeError as error:
                 print(error, flush=True)
-
 
 
 def alreadyTagged(fullname):
@@ -54,7 +58,6 @@ def alreadyTagged(fullname):
     if completedProcess.stderr:
         raise RuntimeError(completedProcess.stderr)
     if tags:
-        log("Already tagged.")
         return True
     else: return False
 
@@ -96,6 +99,24 @@ def tagJPG(fullname, md5):
     return completedProcess.returncode == 0
 
 
+def convertPNG(fullname, jpgName):
+    image = Image.open(fullname)
+    if image.mode != 'RGB':
+        image = image.convert('RGB')
+    try:
+        image.save(jpgName, quality=100)
+        return True
+    except:
+        print("Error converting {}".format(fullname), flush=True)
+        return False
+
+
+def moveToBackup(fullname, backupDirectory):
+    try: shutil.move(fullname, backupDirectory + os.path.basename(fullname))
+    except FileExistsError: 
+        os.remove(fullname)
+
+
 def prepBackup(backupDirectory):
     tarballName = backupDirectory[:-1] + ".tgz"
     if not os.path.isdir(backupDirectory):
@@ -117,18 +138,11 @@ def compressOriginals(backupDirectory):
     shutil.rmtree(backupDirectory)
 
 
-def log(message):
-    if verboseLogs:
-        print(message, flush=True)
-
-
-
 def main():
     targetDirectory = "V:/Media/sampleTest/"
     backupDirectory = "V:/Media/sampleTestOriginals/"
 
     args = parseArgs()
-    verboseLogs = args.verbose
     if args.targetDirectory is not None:
         targetDirectory = args.targetDirectory
     if not targetDirectory.endswith('/'):
