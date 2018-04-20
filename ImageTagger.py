@@ -20,8 +20,7 @@ class ImageTagger(object):
             if not subdir.endswith('/'):
                 subdir += '/'
             for image in images:
-                try:
-                    self.processImage(subdir, image)
+                try: self.processImage(subdir, image)
                 except RuntimeError as error:
                     print(error, flush=True)
 
@@ -61,8 +60,7 @@ class ImageTagger(object):
         tags = completedProcess.stdout.decode()
         if completedProcess.stderr:
             raise RuntimeError(completedProcess.stderr)
-        if tags:
-            return True
+        if tags: return True
         else: return False
 
     def queryDanbooru(self, md5):
@@ -91,11 +89,9 @@ class ImageTagger(object):
 
     def queryTags(self, md5):
         tagString = self.queryDanbooru(md5)
-        if tagString:
-            return tagString
+        if tagString: return tagString
         tagString = self.queryGelbooru(md5)
-        if tagString:
-            return tagString
+        if tagString: return tagString
         return False
 
     def tagJPG(self, fullname, tagString):
