@@ -36,7 +36,7 @@ class ImageTagger(object):
 
     def processJPG(self, subdir, image, tagString):
         fullname = subdir + image
-        if self.isPartialRun and alreadyTagged(fullname):
+        if self.isPartialRun and self.alreadyTagged(fullname):
             return
         print("Attempting to tag {}".format(image), flush=True)
         if self.tagJPG(fullname, tagString):
