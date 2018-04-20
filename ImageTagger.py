@@ -27,7 +27,7 @@ class ImageTagger(object):
     def processImage(self, subdir, image):
         if self.md5Regex.match(image):
             md5, ext = image.split('.')
-            tagString = self.queryTags(md5)
+            tagString = self.getTags(md5)
             if tagString:
                 if ext == 'jpg' or ext == 'jpeg':
                     self.processJPG(subdir, image, tagString)
@@ -63,7 +63,7 @@ class ImageTagger(object):
         if tags: return True
         else: return False
 
-    def queryDanbooru(self, md5):
+    def getTagsFromDanbooru(self, md5):
         requestURL = "http://danbooru.donmai.us/posts.json?md5={}".format(md5)
         print("Querying: {}".format(requestURL), flush=True)
         response = requests.get(requestURL)
@@ -75,7 +75,7 @@ class ImageTagger(object):
             return False
         else: return response.json()['tag_string']
 
-    def queryGelbooru(self, md5):
+    def getTagsFromGelbooru(self, md5):
         requestURL = "http://gelbooru.com/index.php?page=dapi&s=post&q=index&json=1&tags=md5:{}".format(md5)
         print("Querying: {}".format(requestURL), flush=True)
         response = requests.get(requestURL)
@@ -87,10 +87,10 @@ class ImageTagger(object):
             return False
         else: return response.json()[0]['tags']
 
-    def queryTags(self, md5):
-        tagString = self.queryDanbooru(md5)
+    def getTags(self, md5):
+        tagString = self.getTagsFromDanbooru(md5)
         if tagString: return tagString
-        tagString = self.queryGelbooru(md5)
+        tagString = self.getTagsFromGelbooru(md5)
         if tagString: return tagString
         return False
 
