@@ -29,25 +29,25 @@ def tagImages(targetDirectory, backupDirectory, isPartialRun):
             try:
                 if md5Regex.match(image):
                     md5, ext = image.split('.')
-                    if ext == 'jpg' or ext == 'jpeg':
-                        if isPartialRun and alreadyTagged(fullname):
-                            continue
-                        print("Attempting to tag {}".format(image), flush=True)
-                        if tagJPG(fullname, md5):
-                            print("Tag successful.", flush=True)
-                            original = fullname + "_original"
-                            moveToBackup(original, backupDirectory)
-                    elif ext == 'png':
-                        jpgName = os.path.splitext(fullname)[0] + '.jpg'
-                        print("Converting {}...".format(image), flush=True)
-                        if convertPNG(fullname, jpgName):
-                            print("Conversion successful.", flush=True)
-                            moveToBackup(fullname, backupDirectory)
-                        print("Attempting to tag {}".format(os.path.basename(jpgName)), flush=True)
-                        if tagJPG(jpgName, md5):
-                            print("Tag successful.", flush=True)
-                            original = jpgName + "_original"
-                            os.remove(original)
+                    tagString = queryTags(md5)
+                    if tagString:
+                        if ext == 'jpg' or ext == 'jpeg':
+                            if isPartialRun and alreadyTagged(fullname):
+                                continue
+                            print("Attempting to tag {}".format(image), flush=True)
+                            if tagJPG(fullname, tagString):
+                                original = fullname + "_original"
+                                moveToBackup(original, backupDirectory)
+                        elif ext == 'png':
+                            jpgName = os.path.splitext(fullname)[0] + '.jpg'
+                            print("Converting {}...".format(image), flush=True)
+                            if convertPNG(fullname, jpgName):
+                                print("Conversion successful.", flush=True)
+                                moveToBackup(fullname, backupDirectory)
+                            print("Attempting to tag {}".format(os.path.basename(jpgName)), flush=True)
+                            if tagJPG(jpgName, tagString):
+                                original = jpgName + "_original"
+                                os.remove(original)
             except RuntimeError as error:
                 print(error, flush=True)
 
@@ -88,12 +88,17 @@ def queryGelbooru(md5):
     else: return response.json()[0]['tags']
 
 
-def tagJPG(fullname, md5):
+def queryTags(md5):
     tagString = queryDanbooru(md5)
-    if not tagString:
-        tagString = queryGelbooru(md5)
-    if not tagString:
-        return False
+    if tagString:
+        return tagString
+    tagString = queryGelbooru(md5)
+    if tagString:
+        return tagString
+    return False
+
+
+def tagJPG(fullname, tagString):
     cmd = 'exiftool -XPKeywords="{}" "{}"'.format(tagString, fullname)
     completedProcess = subprocess.run(cmd, shell=True)
     return completedProcess.returncode == 0
