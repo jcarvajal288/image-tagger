@@ -101,7 +101,9 @@ class ImageTagger(object):
 
     def convertPNG(self, fullname, jpgName):
         image = Image.open(fullname)
-        if image.mode != 'RGB':
+        if image.mode == 'RGBA':
+            image = image.convert('RGBA')
+        elif image.mode != 'RGB':
             image = image.convert('RGB')
         try:
             image.save(jpgName, quality=100)
