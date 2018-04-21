@@ -26,6 +26,8 @@ class ImageTagger(object):
 
     def processImage(self, subdir, image):
         if self.md5Regex.match(image):
+            if self.isPartialRun and self.alreadyTagged(subdir + image):
+                return
             md5, ext = image.split('.')
             tagString = self.getTags(md5)
             if tagString:
@@ -36,8 +38,6 @@ class ImageTagger(object):
 
     def processJPG(self, subdir, image, tagString):
         fullname = subdir + image
-        if self.isPartialRun and self.alreadyTagged(fullname):
-            return
         print("Attempting to tag {}".format(image), flush=True)
         if self.tagJPG(fullname, tagString):
             original = fullname + "_original"
@@ -73,7 +73,9 @@ class ImageTagger(object):
         elif response.json() is None:
             print("No response from danbooru.", flush=True)
             return False
-        else: return response.json()['tag_string']
+        else: 
+            print("Tags found from danbooru.", flush=True)
+            return response.json()['tag_string']
 
     def getTagsFromGelbooru(self, md5):
         requestURL = "http://gelbooru.com/index.php?page=dapi&s=post&q=index&json=1&tags=md5:{}".format(md5)
@@ -85,7 +87,9 @@ class ImageTagger(object):
         elif response.text == '':
             print("No response from gelbooru.", flush=True)
             return False
-        else: return response.json()[0]['tags']
+        else: 
+            print("Tags found from gelbooru.", flush=True)
+            return response.json()[0]['tags']
 
     def getTags(self, md5):
         tagString = self.getTagsFromDanbooru(md5)
