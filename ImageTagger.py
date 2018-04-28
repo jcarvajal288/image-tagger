@@ -25,10 +25,10 @@ class ImageTagger(object):
                     print(error, flush=True)
 
     def processImage(self, subdir, image):
-        if self.md5Regex.match(image):
+        md5, ext = image.split('.')
+        if self.md5Regex.match(image) and ext in ['jpg', 'jpeg', 'png']:
             if self.isPartialRun and self.alreadyTagged(subdir + image):
                 return
-            md5, ext = image.split('.')
             tagString = self.getTags(md5)
             if tagString:
                 if ext == 'jpg' or ext == 'jpeg':
