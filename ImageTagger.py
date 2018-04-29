@@ -21,11 +21,13 @@ class ImageTagger(object):
                 subdir += '/'
             for image in images:
                 try: self.processImage(subdir, image)
-                except RuntimeError as error:
+                except Exception as error:
+                    print("Unexpected error processing image: {}".format(subdir + image), flush=True)
                     print(error, flush=True)
 
     def processImage(self, subdir, image):
-        md5, ext = image.split('.')
+        try: md5, ext = image.split('.')
+        except ValueError: return # not a valid image anyway
         if self.md5Regex.match(image) and ext in ['jpg', 'jpeg', 'png']:
             if self.isPartialRun and self.alreadyTagged(subdir + image):
                 return
