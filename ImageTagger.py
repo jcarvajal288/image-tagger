@@ -14,6 +14,17 @@ class ImageTagger(object):
         self.backupDirectory = args.backupDirectory
         self.isPartialRun = args.partial
         self.md5Regex = re.compile(r'^[a-f0-9]{32}\.\w+$')
+        self.badMD5sFile = "knownBadMD5s.txt"
+        self.knownBadMD5s = self.readKnownBadMD5s()
+
+    def readKnownBadMD5s(self):
+        if not self.isPartialRun:
+            return set()
+        try:
+            with open(self.badMD5sFile) as f:
+                return set([v.strip() for v in f.readlines()])
+        except FileNotFoundError:
+            return set()
 
     def tagImages(self):
         for subdir, dirs, images in os.walk(self.targetDirectory):
@@ -29,7 +40,7 @@ class ImageTagger(object):
         try: md5, ext = image.split('.')
         except ValueError: return # not a valid image anyway
         if self.md5Regex.match(image) and ext in ['jpg', 'jpeg', 'png']:
-            if self.isPartialRun and self.alreadyTagged(subdir + image):
+            if self.isPartialRun and (self.alreadyTagged(subdir + image) or md5 in self.knownBadMD5s):
                 return
             tagString = self.getTags(md5)
             if tagString:
@@ -98,6 +109,8 @@ class ImageTagger(object):
         if tagString: return tagString
         tagString = self.getTagsFromGelbooru(md5)
         if tagString: return tagString
+        # no tags found anywhere
+        self.knownBadMD5s.add(md5)
         return False
 
     def tagJPG(self, fullname, tagString):
@@ -147,6 +160,11 @@ class ImageTagger(object):
         self.tagImages()
         self.compressOriginals()
 
+    def writeKnownBadMD5s(self):
+        with open(self.badMD5sFile, 'w') as f:
+            for md5 in self.knownBadMD5s:
+                print(md5, file=f)
+
 
 def parseArgs():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -176,6 +194,7 @@ def main():
 
     imageTagger = ImageTagger(args)
     imageTagger.run()
+    imageTagger.writeKnownBadMD5s()
 
 
 if __name__ == '__main__':
