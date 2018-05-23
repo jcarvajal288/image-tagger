@@ -192,6 +192,9 @@ def main():
     if not args.backupDirectory.endswith('/'):
         args.backupDirectory += '/'
 
+    if not os.path.exists(args.targetDirectory):
+        sys.exit("ERROR: Target directory {} not found.".format(args.targetDirectory))
+
     imageTagger = ImageTagger(args)
     imageTagger.run()
     imageTagger.writeKnownBadMD5s()
