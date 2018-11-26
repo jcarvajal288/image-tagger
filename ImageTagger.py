@@ -131,6 +131,7 @@ class ImageTagger(object):
         except Exception as error:
             print("Error converting {}".format(fullname), flush=True)
             print(error, flush=True)
+            os.remove(jpgName)
             return False
 
     def moveToBackup(self, fullname):
