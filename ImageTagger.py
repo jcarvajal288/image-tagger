@@ -128,8 +128,9 @@ class ImageTagger(object):
         try:
             image.save(jpgName, quality=100)
             return True
-        except:
+        except Exception as error:
             print("Error converting {}".format(fullname), flush=True)
+            print(error, flush=True)
             return False
 
     def moveToBackup(self, fullname):
